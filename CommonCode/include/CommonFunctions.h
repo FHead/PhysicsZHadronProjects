@@ -78,6 +78,9 @@ double GetZWeightPbPbDataTrigger(double PT, double Y, double HiBin);
 double GetZWeightPPMC(double PT, double Y);
 double GetZWeightPPData(double PT, double Y);
 double GetZWeightPPDataTrigger(double PT, double Y);
+double GetZWeightPA8TeVMC(double PT, double Y);
+double GetZWeightPA8TeVData(double PT, double Y);
+double GetZWeightPA8TeVDataTrigger(double PT, double Y);
 double GetVZWeightPbPb(double VZ);
 double GetVZWeightPP(double VZ);
 int GetHiBin(double hiHF, int Variation);
@@ -729,6 +732,23 @@ double GetZWeightPPDataTrigger(double PT, double Y)
       YWeight = YWeight * Y + PY[i];
    
    return GetZWeightPPMC(PT, Y) / YWeight;
+}
+
+double GetZWeightPA8TeVMC(double PT, double Y)
+{
+   double WY = 0.948943-0.0011024*Y+0.017473*Y*Y+0.0000315629*Y*Y*Y-0.00304203*Y*Y*Y*Y;
+   double WPT = 1.00183-0.000093957*PT;
+   return 1 / WY / WPT;
+}
+
+double GetZWeightPA8TeVData(double PT, double Y)
+{
+   return GetZWeightPA8TeVMC(PT, Y);
+}
+
+double GetZWeightPA8TeVDataTrigger(double PT, double Y)
+{
+   return GetZWeightPA8TeVMC(PT, Y);
 }
 
 double GetVZWeightPbPb(double VZ)
