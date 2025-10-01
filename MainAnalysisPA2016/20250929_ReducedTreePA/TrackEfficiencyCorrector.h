@@ -40,7 +40,7 @@ double TrackEfficiencyCorrector::GetCorrection(double pt, double eta)
       return 0;
    if(CheckBounds(pt, eta) == false)
       return 0;
-   return HEfficiency->GetBinContent(HEfficiency->FindBin(eta, pt));
+   return 1 / HEfficiency->GetBinContent(HEfficiency->FindBin(eta, pt));
 }
 
 bool TrackEfficiencyCorrector::CheckBounds(double pt, double eta)

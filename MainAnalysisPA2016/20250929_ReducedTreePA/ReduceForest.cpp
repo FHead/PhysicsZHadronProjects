@@ -18,7 +18,7 @@ double GetGenHFSum(GenParticleTreeMessenger *M, int SubEvent = -1);
 
 int main(int argc, char *argv[])
 {
-   string VersionString = "V8";
+   string VersionString = "V0.1";
    
    CommandLine CL(argc, argv);
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
    // TrackResidualCentralityCorrector TrackResidual(TrackResidualPath);
 
    TFile OutputFile(OutputFileName.c_str(), "RECREATE");
-   TTree Tree("Tree", Form("Tree for ZHadron EEC analysis (%s)", VersionString.c_str()));
+   TTree Tree("Tree", Form("Tree for ZHadron PA analysis (%s)", VersionString.c_str()));
    TTree InfoTree("InfoTree", "Information");
 
    ZHadronMessenger MZHadron;
