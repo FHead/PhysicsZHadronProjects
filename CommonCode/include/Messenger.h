@@ -1,3 +1,6 @@
+#ifndef MESSENGER_H_ASDFASDF
+#define MESSENGER_H_ASDFASDF
+
 #include <iostream>
 #include <vector>
 
@@ -514,9 +517,13 @@ public:
 
    float SignalHF;
    float BackgroundHF;
+   float SubEvent0HF;
+   float SubEventAllHF;
    float SignalVZ;
 
+   float EventWeight;
    float NCollWeight;
+   float InterSampleZWeight;
    float ZWeight;
    float VZWeight;
    float ExtraZWeight[12];
@@ -525,104 +532,71 @@ public:
    float VX, VY, VZ, VXError, VYError, VZError;
    int NPU;
    
-   std::vector<double> *zMass;
-   std::vector<double> *zEta;
-   std::vector<double> *zPhi;
-   std::vector<double> *zPt;
-   std::vector<double> *genZMass;
-   std::vector<double> *genZEta;
-   std::vector<double> *genZPhi;
-   std::vector<double> *genZPt;
-   std::vector<double> *trackPt;
-   std::vector<double> *trackDeta;
-   std::vector<double> *trackDphi;
-   std::vector<double> *trackPDFId;
-   std::vector<double> *trackEta;
-   std::vector<double> *trackPhi;
+   std::vector<float> *zMass;
+   std::vector<float> *zEta;
+   std::vector<float> *zY;
+   std::vector<float> *zPhi;
+   std::vector<float> *zPt;
+   std::vector<float> *genZMass;
+   std::vector<float> *genZEta;
+   std::vector<float> *genZY;
+   std::vector<float> *genZPhi;
+   std::vector<float> *genZPt;
+   std::vector<float> *trackPt;
+   std::vector<float> *trackPDFId;
+   std::vector<float> *trackEta;
+   std::vector<float> *trackY;
+   std::vector<float> *trackPhi;
    std::vector<bool> *trackMuTagged;
-   std::vector<double> *trackMuDR;
-   std::vector<double> *trackWeight;
-   std::vector<double> *trackResidualWeight;
+   std::vector<float> *trackMuDR;
+   std::vector<float> *trackWeight;
+   std::vector<float> *trackResidualWeight;
    std::vector<int> *trackCharge;
    std::vector<int> *subevent;
+   std::vector<float> *neutralPt;   // these are from PF candidates
+   std::vector<float> *neutralEta;
+   std::vector<float> *neutralPhi;
+   std::vector<int> *neutralPDGId;
    
-   std::vector<double> *jetPt;
-   std::vector<double> *jetDeta;
-   std::vector<double> *jetDphi;
-   std::vector<double> *jetRefPt;
-   std::vector<double> *jetRefDeta;
-   std::vector<double> *jetRefDphi;
-   std::vector<bool> *jetMuTagged;
-   
-   std::vector<double> *genJetPt;
-   std::vector<double> *genJetEta;
-   std::vector<double> *genJetPhi;
+   std::vector<float> *muEta1;
+   std::vector<float> *muEta2;
+   std::vector<float> *muPhi1;
+   std::vector<float> *muPhi2;
+   std::vector<float> *muPt1;
+   std::vector<float> *muPt2;
 
-   double maxOppositeDEta;
-   double maxOppositeDPhi;
-   double maxDEta;
-   double maxDPhi;
-   double maxOppositeWTADEta;
-   double maxOppositeWTADPhi;
-   double maxMoreOppositeWTADEta;
-   double maxMoreOppositeWTADPhi;
-   double maxOppositeCSWTADEta;
-   double maxOppositeCSWTADPhi;
-   double maxOppositeChargedWTADEta;
-   double maxOppositeChargedWTADPhi;
-   double maxMoreOppositeChargedWTADEta;
-   double maxMoreOppositeChargedWTADPhi;
-   double maxOppositeHardChargedWTADEta;
-   double maxOppositeHardChargedWTADPhi;
+   std::vector<float> *muDeta;
+   std::vector<float> *muDphi;
+   std::vector<float> *muDR;
+   std::vector<float> *muDphiS;
 
-   double maxOppositeJet12Pt;
-   double maxOppositeJet12DEta;
-   double maxOppositeJet12DPhi;
-   double maxOppositeJet34Pt;
-   double maxOppositeJet34DEta;
-   double maxOppositeJet34DPhi;
-   double maxOppositeJet56Pt;
-   double maxOppositeJet56DEta;
-   double maxOppositeJet56DPhi;
-   double maxOppositeJet78Pt;
-   double maxOppositeJet78DEta;
-   double maxOppositeJet78DPhi;
+   std::vector<float> *genMuPt1;
+   std::vector<float> *genMuPt2;
+   std::vector<float> *genMuEta1;
+   std::vector<float> *genMuEta2;
+   std::vector<float> *genMuPhi1;
+   std::vector<float> *genMuPhi2;
 
-   std::vector<double> *muEta1;
-   std::vector<double> *muEta2;
-   std::vector<double> *muPhi1;
-   std::vector<double> *muPhi2;
-   std::vector<double> *muPt1;
-   std::vector<double> *muPt2;
+   std::vector<float> *genMuDeta;
+   std::vector<float> *genMuDphi;
+   std::vector<float> *genMuDR;
+   std::vector<float> *genMuDphiS;
 
-   std::vector<double> *muDeta;
-   std::vector<double> *muDphi;
-   std::vector<double> *muDR;
-   std::vector<double> *muDphiS;
-
-   std::vector<double> *genMuPt1;
-   std::vector<double> *genMuPt2;
-   std::vector<double> *genMuEta1;
-   std::vector<double> *genMuEta2;
-   std::vector<double> *genMuPhi1;
-   std::vector<double> *genMuPhi2;
-
-   std::vector<double> *genMuDeta;
-   std::vector<double> *genMuDphi;
-   std::vector<double> *genMuDR;
-   std::vector<double> *genMuDphiS;
+public:   // Derived quantities
+   bool GoodGenZ;
+   bool GoodRecoZ;
 
 private:
    bool WriteMode;
    bool Initialized;
 
 public:   
-   ZHadronMessenger(TFile &File, std::string TreeName = "tree");
-   ZHadronMessenger(TFile *File, std::string TreeName = "tree");
-   ZHadronMessenger(TTree *ZHadronTree = nullptr);
+   ZHadronMessenger(TFile &File, std::string TreeName = "tree", bool SkipTrack = false);
+   ZHadronMessenger(TFile *File, std::string TreeName = "tree", bool SkipTrack = false);
+   ZHadronMessenger(TTree *ZHadronTree = nullptr, bool SkipTrack = false);
    ~ZHadronMessenger();
-   bool Initialize(TTree *ZHadronTree);
-   bool Initialize();
+   bool Initialize(TTree *ZHadronTree, bool SkipTrack = false);
+   bool Initialize(bool SkipTrack = false);
    int GetEntries();
    bool GetEntry(int iEntry);
    bool SetBranch(TTree *T);
@@ -631,3 +605,4 @@ public:
    bool FillEntry();
 };
 
+#endif

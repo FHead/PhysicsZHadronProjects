@@ -92,6 +92,7 @@ bool HiEventTreeMessenger::GetEntry(int iEntry)
       return false;
 
    Tree->GetEntry(iEntry);
+
    return true;
 }
    
@@ -1815,16 +1816,16 @@ bool PbPbTrackTreeMessenger::PassZHadron2022CutTight(int index)
    return true;
 }
 
-ZHadronMessenger::ZHadronMessenger(TFile &File, std::string TreeName)
+ZHadronMessenger::ZHadronMessenger(TFile &File, std::string TreeName, bool SkipTrack)
 {
    Initialized = false;
    WriteMode = false;
    
    Tree = (TTree *)File.Get(TreeName.c_str());
-   Initialize();
+   Initialize(SkipTrack);
 }
 
-ZHadronMessenger::ZHadronMessenger(TFile *File, std::string TreeName)
+ZHadronMessenger::ZHadronMessenger(TFile *File, std::string TreeName, bool SkipTrack)
 {
    Initialized = false;
    WriteMode = false;
@@ -1833,15 +1834,15 @@ ZHadronMessenger::ZHadronMessenger(TFile *File, std::string TreeName)
       Tree = (TTree *)File->Get(TreeName.c_str());
    else
       Tree = nullptr;
-   Initialize();
+   Initialize(SkipTrack);
 }
 
-ZHadronMessenger::ZHadronMessenger(TTree *ZHadronTree)
+ZHadronMessenger::ZHadronMessenger(TTree *ZHadronTree, bool SkipTrack)
 {
    Initialized = false;
    WriteMode = false;
 
-   Initialize(ZHadronTree);
+   Initialize(ZHadronTree, SkipTrack);
 }
    
 ZHadronMessenger::~ZHadronMessenger()
@@ -1850,33 +1851,26 @@ ZHadronMessenger::~ZHadronMessenger()
    {
       delete zMass;
       delete zEta;
+      delete zY;
       delete zPhi;
       delete zPt;
       delete genZMass;
       delete genZEta;
+      delete genZY;
       delete genZPhi;
       delete genZPt;
       delete trackPt;
-      delete trackDeta;
-      delete trackDphi;
       delete trackMuTagged;
       delete trackMuDR;
       delete trackPDFId;
       delete trackEta;
+      delete trackY;
       delete trackPhi;
       delete trackCharge;
-
-      delete jetPt;
-      delete jetDeta;
-      delete jetDphi;
-      delete jetRefPt;
-      delete jetRefDeta;
-      delete jetRefDphi;
-      delete jetMuTagged;
-      
-      delete genJetPt;
-      delete genJetEta;
-      delete genJetPhi;
+      delete neutralPt;
+      delete neutralEta;
+      delete neutralPhi;
+      delete neutralPDGId;
 
       delete muEta1;
       delete muEta2;
@@ -1904,13 +1898,13 @@ ZHadronMessenger::~ZHadronMessenger()
    }
 }
    
-bool ZHadronMessenger::Initialize(TTree *ZHadronTree)
+bool ZHadronMessenger::Initialize(TTree *ZHadronTree, bool SkipTrack)
 {
    Tree = ZHadronTree;
-   return Initialize();
+   return Initialize(SkipTrack);
 }
 
-bool ZHadronMessenger::Initialize()
+bool ZHadronMessenger::Initialize(bool SkipTrack)
 {
    if(Tree == nullptr)
       return false;
@@ -1919,17 +1913,18 @@ bool ZHadronMessenger::Initialize()
 
    zMass = nullptr;
    zEta = nullptr;
+   zY = nullptr;
    zPhi = nullptr;
    zPt = nullptr;
    genZMass = nullptr;
    genZEta = nullptr;
+   genZY = nullptr;
    genZPhi = nullptr;
    genZPt = nullptr;
-   trackDphi = nullptr;
    trackPt = nullptr;
-   trackDeta = nullptr;
    trackPDFId = nullptr;
    trackEta = nullptr;
+   trackY = nullptr;
    trackPhi = nullptr;
    trackMuTagged = nullptr;
    trackMuDR = nullptr;
@@ -1937,18 +1932,10 @@ bool ZHadronMessenger::Initialize()
    trackResidualWeight = nullptr;
    trackCharge = nullptr;
    subevent = nullptr;
-
-   jetPt = nullptr;
-   jetDeta = nullptr;
-   jetDphi = nullptr;
-   jetRefPt = nullptr;
-   jetRefDeta = nullptr;
-   jetRefDphi = nullptr;
-   jetMuTagged = nullptr;
-   
-   genJetPt = nullptr;
-   genJetEta = nullptr;
-   genJetPhi = nullptr;
+   neutralPt = nullptr;
+   neutralEta = nullptr;
+   neutralPhi = nullptr;
+   neutralPDGId = nullptr;
 
    muEta1 = nullptr;
    muEta2 = nullptr;
@@ -1985,9 +1972,13 @@ bool ZHadronMessenger::Initialize()
    
    Tree->SetBranchAddress("SignalHF", &SignalHF);
    Tree->SetBranchAddress("BackgroundHF", &BackgroundHF);
+   Tree->SetBranchAddress("SubEvent0HF", &SubEvent0HF);
+   Tree->SetBranchAddress("SubEventAllHF", &SubEventAllHF);
    Tree->SetBranchAddress("SignalVZ", &SignalVZ);
 
+   Tree->SetBranchAddress("EventWeight", &EventWeight);
    Tree->SetBranchAddress("NCollWeight", &NCollWeight);
+   Tree->SetBranchAddress("InterSampleZWeight", &InterSampleZWeight);
    Tree->SetBranchAddress("ZWeight", &ZWeight);
    Tree->SetBranchAddress("VZWeight", &VZWeight);
    Tree->SetBranchAddress("ExtraZWeight", &ExtraZWeight);
@@ -2003,36 +1994,50 @@ bool ZHadronMessenger::Initialize()
    
    Tree->SetBranchAddress("zMass", &zMass);
    Tree->SetBranchAddress("zEta", &zEta);
+   Tree->SetBranchAddress("zY", &zY);
    Tree->SetBranchAddress("zPhi", &zPhi);
    Tree->SetBranchAddress("zPt", &zPt);
    Tree->SetBranchAddress("genZMass", &genZMass);
    Tree->SetBranchAddress("genZEta", &genZEta);
+   Tree->SetBranchAddress("genZY", &genZY);
    Tree->SetBranchAddress("genZPhi", &genZPhi);
    Tree->SetBranchAddress("genZPt", &genZPt);
-   Tree->SetBranchAddress("trackDphi", &trackDphi);
-   Tree->SetBranchAddress("trackPt", &trackPt);
-   Tree->SetBranchAddress("trackDeta", &trackDeta);
-   Tree->SetBranchAddress("trackPDFId", &trackPDFId);
-   // Tree->SetBranchAddress("trackEta", &trackEta);
-   // Tree->SetBranchAddress("trackPhi", &trackPhi);
-   Tree->SetBranchAddress("trackMuTagged", &trackMuTagged);
-   Tree->SetBranchAddress("trackMuDR", &trackMuDR);
-   Tree->SetBranchAddress("trackWeight", &trackWeight);
-   Tree->SetBranchAddress("trackResidualWeight", &trackResidualWeight);
-   Tree->SetBranchAddress("trackCharge", &trackCharge);
-   Tree->SetBranchAddress("subevent", &subevent);
-
-   Tree->SetBranchAddress("jetPt", &jetPt);
-   Tree->SetBranchAddress("jetDeta", &jetDeta);
-   Tree->SetBranchAddress("jetDphi", &jetDphi);
-   Tree->SetBranchAddress("jetRefPt", &jetRefPt);
-   Tree->SetBranchAddress("jetRefDeta", &jetRefDeta);
-   Tree->SetBranchAddress("jetRefDphi", &jetRefDphi);
-   Tree->SetBranchAddress("jetMuTagged", &jetMuTagged);
-   
-   Tree->SetBranchAddress("genJetPt", &genJetPt);
-   Tree->SetBranchAddress("genJetEta", &genJetEta);
-   Tree->SetBranchAddress("genJetPhi", &genJetPhi);
+   if(SkipTrack == false)
+   {
+      Tree->SetBranchAddress("trackPt", &trackPt);
+      Tree->SetBranchAddress("trackPDFId", &trackPDFId);
+      Tree->SetBranchAddress("trackEta", &trackEta);
+      Tree->SetBranchAddress("trackY", &trackY);
+      Tree->SetBranchAddress("trackPhi", &trackPhi);
+      Tree->SetBranchAddress("trackMuTagged", &trackMuTagged);
+      Tree->SetBranchAddress("trackMuDR", &trackMuDR);
+      Tree->SetBranchAddress("trackWeight", &trackWeight);
+      Tree->SetBranchAddress("trackResidualWeight", &trackResidualWeight);
+      Tree->SetBranchAddress("trackCharge", &trackCharge);
+      Tree->SetBranchAddress("subevent", &subevent);
+   }
+   else
+   {
+      Tree->SetBranchStatus("trackPt", false);
+      Tree->SetBranchStatus("trackPDFId", false);
+      Tree->SetBranchStatus("trackEta", false);
+      Tree->SetBranchStatus("trackY", false);
+      Tree->SetBranchStatus("trackPhi", false);
+      Tree->SetBranchStatus("trackMuTagged", false);
+      Tree->SetBranchStatus("trackMuDR", false);
+      Tree->SetBranchStatus("trackWeight", false);
+      Tree->SetBranchStatus("trackResidualWeight", false);
+      Tree->SetBranchStatus("trackCharge", false);
+      Tree->SetBranchStatus("subevent", false);
+   }
+   if(Tree->GetBranch("neutralPt") != nullptr)
+      Tree->SetBranchAddress("neutralPt", &neutralPt);
+   if(Tree->GetBranch("neutralEta") != nullptr)
+      Tree->SetBranchAddress("neutralEta", &neutralEta);
+   if(Tree->GetBranch("neutralPhi") != nullptr)
+      Tree->SetBranchAddress("neutralPhi", &neutralPhi);
+   if(Tree->GetBranch("neutralPDGId") != nullptr)
+      Tree->SetBranchAddress("neutralPDGId", &neutralPDGId);
 
    Tree->SetBranchAddress("muEta1", &muEta1);
    Tree->SetBranchAddress("muEta2", &muEta2);
@@ -2074,6 +2079,30 @@ bool ZHadronMessenger::GetEntry(int iEntry)
       return false;
 
    Tree->GetEntry(iEntry);
+
+   // fill derived quantities
+   GoodGenZ = true;
+   if(genZY == nullptr)
+      GoodGenZ = false;
+   else if(genZY->size() == 0)
+      GoodGenZ = false;
+   else
+   {
+      if(genZMass->at(0) > 120 || genZMass->at(0) < 60)   GoodGenZ = false;
+      if(genZY->at(0) < -2.4 || genZY->at(0) > 2.4)       GoodGenZ = false;
+   }
+   
+   GoodRecoZ = true;
+   if(zY == nullptr)
+      GoodRecoZ = false;
+   else if(zY->size() == 0)
+      GoodRecoZ = false;
+   else
+   {
+      if(zMass->at(0) > 120 || zMass->at(0) < 60)   GoodRecoZ = false;
+      if(zY->at(0) < -2.4 || zY->at(0) > 2.4)       GoodRecoZ = false;
+   }
+
    return true;
 }
 
@@ -2085,62 +2114,55 @@ bool ZHadronMessenger::SetBranch(TTree *T)
    Initialized = true;
    WriteMode = true;
 
-   zMass = new std::vector<double>();
-   zEta = new std::vector<double>();
-   zPhi = new std::vector<double>();
-   zPt = new std::vector<double>();
-   genZMass = new std::vector<double>();
-   genZEta = new std::vector<double>();
-   genZPhi = new std::vector<double>();
-   genZPt = new std::vector<double>();
-   trackPt = new std::vector<double>();
-   trackDeta = new std::vector<double>();
-   trackDphi = new std::vector<double>();
-   trackPDFId = new std::vector<double>();
-   trackEta = new std::vector<double>();
-   trackPhi = new std::vector<double>();
+   zMass = new std::vector<float>();
+   zEta = new std::vector<float>();
+   zY = new std::vector<float>();
+   zPhi = new std::vector<float>();
+   zPt = new std::vector<float>();
+   genZMass = new std::vector<float>();
+   genZEta = new std::vector<float>();
+   genZY = new std::vector<float>();
+   genZPhi = new std::vector<float>();
+   genZPt = new std::vector<float>();
+   trackPt = new std::vector<float>();
+   trackPDFId = new std::vector<float>();
+   trackEta = new std::vector<float>();
+   trackY = new std::vector<float>();
+   trackPhi = new std::vector<float>();
    trackMuTagged = new std::vector<bool>();
-   trackMuDR = new std::vector<double>();
-   trackWeight = new std::vector<double>();
-   trackResidualWeight = new std::vector<double>();
+   trackMuDR = new std::vector<float>();
+   trackWeight = new std::vector<float>();
+   trackResidualWeight = new std::vector<float>();
    trackCharge = new std::vector<int>();
    subevent = new std::vector<int>();
+   neutralPt = new std::vector<float>();
+   neutralEta = new std::vector<float>();
+   neutralPhi = new std::vector<float>();
+   neutralPDGId = new std::vector<int>();
 
-   jetPt = new std::vector<double>();
-   jetDeta = new std::vector<double>();
-   jetDphi = new std::vector<double>();
-   jetRefPt = new std::vector<double>();
-   jetRefDeta = new std::vector<double>();
-   jetRefDphi = new std::vector<double>();
-   jetMuTagged = new std::vector<bool>();
-   
-   genJetPt = new std::vector<double>();
-   genJetEta = new std::vector<double>();
-   genJetPhi = new std::vector<double>();
+   muEta1 = new std::vector<float>();
+   muEta2 = new std::vector<float>();
+   muPhi1 = new std::vector<float>();
+   muPhi2 = new std::vector<float>();
+   muPt1 = new std::vector<float>();
+   muPt2 = new std::vector<float>();
 
-   muEta1 = new std::vector<double>();
-   muEta2 = new std::vector<double>();
-   muPhi1 = new std::vector<double>();
-   muPhi2 = new std::vector<double>();
-   muPt1 = new std::vector<double>();
-   muPt2 = new std::vector<double>();
+   muDeta = new std::vector<float>();
+   muDphi = new std::vector<float>();
+   muDR = new std::vector<float>();
+   muDphiS = new std::vector<float>();
 
-   muDeta = new std::vector<double>();
-   muDphi = new std::vector<double>();
-   muDR = new std::vector<double>();
-   muDphiS = new std::vector<double>();
+   genMuPt1 = new std::vector<float>();
+   genMuPt2 = new std::vector<float>();
+   genMuEta1 = new std::vector<float>();
+   genMuEta2 = new std::vector<float>();
+   genMuPhi1 = new std::vector<float>();
+   genMuPhi2 = new std::vector<float>();
 
-   genMuPt1 = new std::vector<double>();
-   genMuPt2 = new std::vector<double>();
-   genMuEta1 = new std::vector<double>();
-   genMuEta2 = new std::vector<double>();
-   genMuPhi1 = new std::vector<double>();
-   genMuPhi2 = new std::vector<double>();
-
-   genMuDeta = new std::vector<double>();
-   genMuDphi = new std::vector<double>();
-   genMuDR = new std::vector<double>();
-   genMuDphiS = new std::vector<double>();
+   genMuDeta = new std::vector<float>();
+   genMuDphi = new std::vector<float>();
+   genMuDR = new std::vector<float>();
+   genMuDphiS = new std::vector<float>();
 
    Tree = T;
 
@@ -2154,9 +2176,13 @@ bool ZHadronMessenger::SetBranch(TTree *T)
 
    Tree->Branch("SignalHF",               &SignalHF,     "SignalHF/F");
    Tree->Branch("BackgroundHF",           &BackgroundHF, "BackgroundHF/F");
+   Tree->Branch("SubEvent0HF",            &SubEvent0HF,  "SubEvent0HF/F");
+   Tree->Branch("SubEventAllHF",            &SubEventAllHF,  "SubEventAllHF/F");
    Tree->Branch("SignalVZ",               &SignalVZ,     "SignalVZ/F");
 
+   Tree->Branch("EventWeight",            &EventWeight,  "EventWeight/F");
    Tree->Branch("NCollWeight",            &NCollWeight,  "NCollWeight/F");
+   Tree->Branch("InterSampleZWeight",     &InterSampleZWeight,"InterSampleZWeight/F");
    Tree->Branch("ZWeight",                &ZWeight,      "ZWeight/F");
    Tree->Branch("VZWeight",               &VZWeight,     "VZWeight/F");
    Tree->Branch("ExtraZWeight",           &ExtraZWeight, "ExtraZWeight[12]/F");
@@ -2172,67 +2198,30 @@ bool ZHadronMessenger::SetBranch(TTree *T)
 
    Tree->Branch("zMass",                  &zMass);
    Tree->Branch("zEta",                   &zEta);
+   Tree->Branch("zY",                     &zY);
    Tree->Branch("zPhi",                   &zPhi);
    Tree->Branch("zPt",                    &zPt);
    Tree->Branch("genZMass",               &genZMass);
    Tree->Branch("genZEta",                &genZEta);
+   Tree->Branch("genZY",                  &genZY);
    Tree->Branch("genZPhi",                &genZPhi);
    Tree->Branch("genZPt",                 &genZPt);
    Tree->Branch("trackPt",                &trackPt);
-   Tree->Branch("trackDeta",              &trackDeta);
-   Tree->Branch("trackDphi",              &trackDphi);
    Tree->Branch("trackPDFId",             &trackPDFId);
-   // Tree->Branch("trackPhi",               &trackPhi);
-   // Tree->Branch("trackEta",               &trackEta);
+   Tree->Branch("trackPhi",               &trackPhi);
+   Tree->Branch("trackEta",               &trackEta);
+   Tree->Branch("trackY",                 &trackY);
    Tree->Branch("trackMuTagged",          &trackMuTagged);
    Tree->Branch("trackMuDR",              &trackMuDR);
    Tree->Branch("trackWeight",            &trackWeight);
    Tree->Branch("trackResidualWeight",    &trackResidualWeight);
    Tree->Branch("trackCharge",            &trackCharge);
    Tree->Branch("subevent",               &subevent);
+   Tree->Branch("neutralPt",              &neutralPt);
+   Tree->Branch("neutralEta",             &neutralEta);
+   Tree->Branch("neutralPhi",             &neutralPhi);
+   Tree->Branch("neutralPDGId",           &neutralPDGId);
    
-   Tree->Branch("jetPt",                  &jetPt);
-   Tree->Branch("jetDeta",                &jetDeta);
-   Tree->Branch("jetDphi",                &jetDphi);
-   Tree->Branch("jetRefPt",               &jetRefPt);
-   Tree->Branch("jetRefDeta",             &jetRefDeta);
-   Tree->Branch("jetRefDphi",             &jetRefDphi);
-   Tree->Branch("jetMuTagged",            &jetMuTagged);
-   
-   Tree->Branch("genJetPt",               &genJetPt);
-   Tree->Branch("genJetEta",              &genJetEta);
-   Tree->Branch("genJetPhi",              &genJetPhi);
- 
-   Tree->Branch("maxOppositeDEta",        &maxOppositeDEta);
-   Tree->Branch("maxOppositeDPhi",        &maxOppositeDPhi);
-   Tree->Branch("maxDEta",                &maxDEta);
-   Tree->Branch("maxDPhi",                &maxDPhi);
-   Tree->Branch("maxOppositeWTADEta",     &maxOppositeWTADEta);
-   Tree->Branch("maxOppositeWTADPhi",     &maxOppositeWTADPhi);
-   Tree->Branch("maxMoreOppositeWTADEta", &maxMoreOppositeWTADEta);
-   Tree->Branch("maxMoreOppositeWTADPhi", &maxMoreOppositeWTADPhi);
-   Tree->Branch("maxOppositeCSWTADEta",   &maxOppositeCSWTADEta);
-   Tree->Branch("maxOppositeCSWTADPhi",   &maxOppositeCSWTADPhi);
-   Tree->Branch("maxOppositeChargedWTADEta",     &maxOppositeChargedWTADEta);
-   Tree->Branch("maxOppositeChargedWTADPhi",     &maxOppositeChargedWTADPhi);
-   Tree->Branch("maxMoreOppositeChargedWTADEta", &maxMoreOppositeChargedWTADEta);
-   Tree->Branch("maxMoreOppositeChargedWTADPhi", &maxMoreOppositeChargedWTADPhi);
-   Tree->Branch("maxOppositeHardChargedWTADEta", &maxOppositeHardChargedWTADEta);
-   Tree->Branch("maxOppositeHardChargedWTADPhi", &maxOppositeHardChargedWTADPhi);
-   
-   Tree->Branch("maxOppositeJet12Pt",     &maxOppositeJet12Pt);
-   Tree->Branch("maxOppositeJet12DEta",   &maxOppositeJet12DEta);
-   Tree->Branch("maxOppositeJet12DPhi",   &maxOppositeJet12DPhi);
-   Tree->Branch("maxOppositeJet34Pt",     &maxOppositeJet34Pt);
-   Tree->Branch("maxOppositeJet34DEta",   &maxOppositeJet34DEta);
-   Tree->Branch("maxOppositeJet34DPhi",   &maxOppositeJet34DPhi);
-   Tree->Branch("maxOppositeJet56Pt",     &maxOppositeJet56Pt);
-   Tree->Branch("maxOppositeJet56DEta",   &maxOppositeJet56DEta);
-   Tree->Branch("maxOppositeJet56DPhi",   &maxOppositeJet56DPhi);
-   Tree->Branch("maxOppositeJet78Pt",     &maxOppositeJet78Pt);
-   Tree->Branch("maxOppositeJet78DEta",   &maxOppositeJet78DEta);
-   Tree->Branch("maxOppositeJet78DPhi",   &maxOppositeJet78DPhi);
-
    Tree->Branch("muEta1",                 &muEta1);
    Tree->Branch("muEta2",                 &muEta2);
    Tree->Branch("muPhi1",                 &muPhi1);
@@ -2267,9 +2256,13 @@ void ZHadronMessenger::Clear()
 
    SignalHF = -1;
    BackgroundHF = -1;
+   SubEvent0HF = -1;
+   SubEventAllHF = -1;
    SignalVZ = -999;
 
+   EventWeight = 1;
    NCollWeight = 1;
+   InterSampleZWeight = 1;
    ZWeight = 1;
    VZWeight = 1;
    for(int i = 0; i < 12; i++)
@@ -2286,67 +2279,30 @@ void ZHadronMessenger::Clear()
 
    zMass->clear();
    zEta->clear();
+   zY->clear();
    zPhi->clear();
    zPt->clear();
    genZMass->clear();
    genZEta->clear();
+   genZY->clear();
    genZPhi->clear();
    genZPt->clear();
    trackPt->clear();
-   trackDeta->clear();
-   trackDphi->clear();
    trackPDFId->clear();
    trackPhi->clear();
    trackEta->clear();
+   trackY->clear();
    trackMuTagged->clear();
    trackMuDR->clear();
    trackWeight->clear();
    trackResidualWeight->clear();
    trackCharge->clear();
    subevent->clear();
+   neutralPt->clear();
+   neutralEta->clear();
+   neutralPhi->clear();
+   neutralPDGId->clear();
 
-   jetPt->clear();
-   jetDeta->clear();
-   jetDphi->clear();
-   jetRefPt->clear();
-   jetRefDeta->clear();
-   jetRefDphi->clear();
-   jetMuTagged->clear();
-   
-   genJetPt->clear();
-   genJetEta->clear();
-   genJetPhi->clear();
-
-   maxOppositeDEta = 0;
-   maxOppositeDPhi = 0;
-   maxDEta = 0;
-   maxDPhi = 0;
-   maxOppositeWTADEta = 0;
-   maxOppositeWTADPhi = 0;
-   maxMoreOppositeWTADEta = 0;
-   maxMoreOppositeWTADPhi = 0;
-   maxOppositeCSWTADEta = 0;
-   maxOppositeCSWTADPhi = 0;
-   maxOppositeChargedWTADEta = 0;
-   maxOppositeChargedWTADPhi = 0;
-   maxMoreOppositeChargedWTADEta = 0;
-   maxMoreOppositeChargedWTADPhi = 0;
-   maxOppositeHardChargedWTADEta = 0;
-   maxOppositeHardChargedWTADPhi = 0;
-   
-   maxOppositeJet12Pt = 0;
-   maxOppositeJet12DEta = 0;
-   maxOppositeJet12DPhi = 0;
-   maxOppositeJet34Pt = 0;
-   maxOppositeJet34DEta = 0;
-   maxOppositeJet34DPhi = 0;
-   maxOppositeJet56Pt = 0;
-   maxOppositeJet56DEta = 0;
-   maxOppositeJet56DPhi = 0;
-   maxOppositeJet78Pt = 0;
-   maxOppositeJet78DEta = 0;
-   maxOppositeJet78DPhi = 0;
-   
    muEta1->clear();
    muEta2->clear();
    muPhi1->clear();
@@ -2384,9 +2340,13 @@ void ZHadronMessenger::CopyNonTrack(ZHadronMessenger &M)
 
    SignalHF     = M.SignalHF;
    BackgroundHF = M.BackgroundHF;
+   SubEvent0HF  = M.SubEvent0HF;
+   SubEventAllHF  = M.SubEventAllHF;
    SignalVZ     = M.SignalVZ;
 
+   EventWeight  = M.EventWeight;
    NCollWeight  = M.NCollWeight;
+   InterSampleZWeight = M.InterSampleZWeight;
    ZWeight      = M.ZWeight;
    VZWeight     = M.VZWeight;
    for(int i = 0; i < 12; i++)
@@ -2403,55 +2363,15 @@ void ZHadronMessenger::CopyNonTrack(ZHadronMessenger &M)
   
    if(zMass != nullptr && M.zMass != nullptr)   *zMass = *(M.zMass);
    if(zEta != nullptr && M.zEta != nullptr)   *zEta = *(M.zEta);
+   if(zY != nullptr && M.zY != nullptr)   *zY = *(M.zY);
    if(zPhi != nullptr && M.zPhi != nullptr)   *zPhi = *(M.zPhi);
    if(zPt != nullptr && M.zPt != nullptr)   *zPt = *(M.zPt);
    if(genZMass != nullptr && M.genZMass != nullptr)   *genZMass = *(M.genZMass);
    if(genZEta != nullptr && M.genZEta != nullptr)   *genZEta = *(M.genZEta);
+   if(genZY != nullptr && M.genZY != nullptr)   *genZY = *(M.genZY);
    if(genZPhi != nullptr && M.genZPhi != nullptr)   *genZPhi = *(M.genZPhi);
    if(genZPt != nullptr && M.genZPt != nullptr)   *genZPt = *(M.genZPt);
    
-   if(jetPt != nullptr && M.jetPt != nullptr)   *jetPt = *(M.jetPt);
-   if(jetDeta != nullptr && M.jetDeta != nullptr)   *jetDeta = *(M.jetDeta);
-   if(jetDphi != nullptr && M.jetDphi != nullptr)   *jetDphi = *(M.jetDphi);
-   if(jetRefPt != nullptr && M.jetRefPt != nullptr)   *jetRefPt = *(M.jetRefPt);
-   if(jetRefDeta != nullptr && M.jetRefDeta != nullptr)   *jetRefDeta = *(M.jetRefDeta);
-   if(jetRefDphi != nullptr && M.jetRefDphi != nullptr)   *jetRefDphi = *(M.jetRefDphi);
-   if(jetMuTagged != nullptr && M.jetMuTagged != nullptr)   *jetMuTagged = *(M.jetMuTagged);
-   
-   if(genJetPt != nullptr && M.genJetPt != nullptr)   *genJetPt = *(M.genJetPt);
-   if(genJetEta != nullptr && M.genJetEta != nullptr)   *genJetEta = *(M.genJetEta);
-   if(genJetPhi != nullptr && M.genJetPhi != nullptr)   *genJetPhi = *(M.genJetPhi);
-
-   maxOppositeDEta = M.maxOppositeDEta;
-   maxOppositeDPhi = M.maxOppositeDPhi;
-   maxDEta = M.maxDEta;
-   maxDPhi = M.maxDPhi;
-   maxOppositeWTADEta = M.maxOppositeWTADEta;
-   maxOppositeWTADPhi = M.maxOppositeWTADPhi;
-   maxMoreOppositeWTADEta = M.maxMoreOppositeWTADEta;
-   maxMoreOppositeWTADPhi = M.maxMoreOppositeWTADPhi;
-   maxOppositeCSWTADEta = M.maxOppositeCSWTADEta;
-   maxOppositeCSWTADPhi = M.maxOppositeCSWTADPhi;
-   maxOppositeChargedWTADEta = M.maxOppositeChargedWTADEta;
-   maxOppositeChargedWTADPhi = M.maxOppositeChargedWTADPhi;
-   maxMoreOppositeChargedWTADEta = M.maxMoreOppositeChargedWTADEta;
-   maxMoreOppositeChargedWTADPhi = M.maxMoreOppositeChargedWTADPhi;
-   maxOppositeHardChargedWTADEta = M.maxOppositeHardChargedWTADEta;
-   maxOppositeHardChargedWTADPhi = M.maxOppositeHardChargedWTADPhi;
-
-   maxOppositeJet12Pt = M.maxOppositeJet12Pt;
-   maxOppositeJet12DEta = M.maxOppositeJet12DEta;
-   maxOppositeJet12DPhi = M.maxOppositeJet12DPhi;
-   maxOppositeJet34Pt = M.maxOppositeJet34Pt;
-   maxOppositeJet34DEta = M.maxOppositeJet34DEta;
-   maxOppositeJet34DPhi = M.maxOppositeJet34DPhi;
-   maxOppositeJet56Pt = M.maxOppositeJet56Pt;
-   maxOppositeJet56DEta = M.maxOppositeJet56DEta;
-   maxOppositeJet56DPhi = M.maxOppositeJet56DPhi;
-   maxOppositeJet78Pt = M.maxOppositeJet78Pt;
-   maxOppositeJet78DEta = M.maxOppositeJet78DEta;
-   maxOppositeJet78DPhi = M.maxOppositeJet78DPhi;
-
    if(muEta1 != nullptr && M.muEta1 != nullptr)   *muEta1 = *(M.muEta1);
    if(muEta2 != nullptr && M.muEta2 != nullptr)   *muEta2 = *(M.muEta2);
    if(muPhi1 != nullptr && M.muPhi1 != nullptr)   *muPhi1 = *(M.muPhi1);
