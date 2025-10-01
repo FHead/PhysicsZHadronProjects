@@ -290,7 +290,8 @@ int main(int argc, char *argv[])
          bool GoodRecoZ = MZHadron.zPt->size() > 0 && (MZHadron.zPt->at(0) > MinZPT);
          if(CheckZ == true)
          {
-            // Yen-Jie: Propose to save the charged hadron information when either GoodGenZ or GoodRecoZ is identified 
+            // Yen-Jie: Propose to save the charged hadron information
+            //    when either GoodGenZ or GoodRecoZ is identified 
             if(DoGenLevel == true && (GoodGenZ == false && GoodRecoZ == false))
             {
                MZHadron.FillEntry();
@@ -319,7 +320,6 @@ int main(int argc, char *argv[])
             else
             {
                MZHadron.ZWeight = GetZWeightPA8TeVDataTrigger(Z.Pt(), Z.Rapidity());
-               // Extra Z weight for systematics
 
                double Mu1Eta = MZHadron.muEta1->at(0);
                double Mu1PT = MZHadron.muPt1->at(0);
