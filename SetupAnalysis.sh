@@ -1,0 +1,2 @@
+
+export ProjectBase=$PWD
