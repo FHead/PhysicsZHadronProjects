@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
 
    bool DoGenLevel                    = CL.GetBool("DoGenLevel", true);
    bool IsData                        = CL.GetBool("IsData", false);
+   int RunStart                       = IsData ? CL.GetInt("RunStart", -1) : -1;
+   int RunEnd                         = IsData ? CL.GetInt("RunEnd", 999999) : 999999;
    bool Is8TeV                        = CL.GetBool("Is8TeV", false);
    bool IsBackground                  = CL.GetBool("IsBackground", false);
    double Fraction                    = CL.GetDouble("Fraction", 1.00);
@@ -89,6 +91,10 @@ int main(int argc, char *argv[])
          MMu.GetEntry(iE);
          MSkim.GetEntry(iE);
          MTrigger.GetEntry(iE);
+
+         // Specific run ranges
+         if(RunStart > MEvent.Run)   continue;
+         if(RunEnd < MEvent.Run)     continue;
 
          MZHadron.Clear();
 
